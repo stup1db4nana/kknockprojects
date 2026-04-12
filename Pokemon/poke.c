@@ -1,5 +1,5 @@
-//k.knock 포켓몬 게임 과제
-//FreedesktopSDK 25.08, gcc 16.0.1
+// k.knock 포켓몬 게임 과제
+// FreedesktopSDK 25.08, gcc 16.0.1
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -7,13 +7,21 @@
 #include <unistd.h>
 #include <time.h>
 
-#define savedef "pokesave"
-#define configdef "pokeconf"
+#define savedef "pokesave"   // 세이브 이름
+#define configdef "pokeconf" // 설정 이름
 
-typedef enum {FIRE, WATER, GRASS} poketype;
-const char *poketypename[] = {"fire", "water", "grass"};
+/*
+typedef enum
+{
+    FIRE,
+    WATER,
+    GRASS
+} poketype;
+ */
+const char *poketypename[] = {"불", "물", "풀"};
 
-typedef struct {
+typedef struct
+{
     char *name;
     char *nickname;
     int type;
@@ -22,28 +30,41 @@ typedef struct {
     int curhp;
 } pokedef;
 
-typedef struct {
+typedef struct
+{
     FILE *savedir;
     FILE *configdir;
     pokedef *charastat;
     int pokecount;
     int currentpokemon;
+    int money;
+    int pokeball;
+    int healthpotion;
 } gamestatus;
 
-int searchfromfile(FILE *dir, char *value, char *followingstring); //파일 포인터, 찾는 열, 다음 열
+int searchfromfile(FILE *dir, char *value, char *followingstring); // 파일 포인터, 찾는 열, 다음 열
 
 void initload(gamestatus *stat);
-    void characreator(gamestatus *stat);
-    void saveloader(gamestatus *stat);
+void characreator(gamestatus *stat);
+void saveloader(gamestatus *stat);
 
 void setcharastatus(pokedef *chara);
 
 int mainmenu(gamestatus *stat);
-    void adventure(gamestatus *stat);
-        int combatinit(pokedef *playerchara, pokedef *enemychara);
-        int attack(pokedef *chara1, pokedef *chara2);
-        //void attack(pokedef *chara1, pokedef *chara2);
-        int replaceplayerchara(gamestatus *stat);
+void adventure(gamestatus *stat);
+int combatinit(pokedef *playerchara, pokedef *enemychara);
+int attack(pokedef *chara1, pokedef *chara2);
+// void attack(pokedef *chara1, pokedef *chara2);
+int replaceplayerchara(gamestatus *stat);
+int capturechara(gamestatus *stat, pokedef *capturechara);
+
+void save(gamestatus *stat);
+
+void market(gamestatus *stat);
+
+void centre(gamestatus *stat);
+
+void pokedex(gamestatus *stat);
 
 /*
  initloader ->characreator 또는 saveloader 끝
@@ -51,83 +72,102 @@ int mainmenu(gamestatus *stat);
                                     combatinit:
                                         attack;
                                         replaceplayerchara;
+                                도망
 
 
 
 
 */
 
-int main() {
+void main()
+{
     gamestatus *stat = malloc(sizeof(gamestatus));
-
+    int repeatcondition = 1;
     initload(stat);
 
-    while(1) {
-        switch (mainmenu(stat)) {
-            case 1:
-                adventure(stat);
-                break;
-            case 2:
-                printf("bruhsave\n");
-                break;
-            case 3:
-                printf("bruh2\n");
-                break;
-            case 4:
-                printf("bruh3\n");
-                break;
-            case 5:
-                printf("bruh4\n");
-                break;
-            default:
-                printf("bruh!!!!\n");
+    while (repeatcondition)
+    {
+        switch (mainmenu(stat))
+        {
+        case 1:
+            adventure(stat);
+            break;
+        case 2:
+            printf("bruhsave\n");
+            break;
+        case 3:
+            market(stat);
+            break;
+        case 4:
+            centre(stat);
+            break;
+        case 5:
+            printf("docs\n");
+            break;
+        default:
+            printf("bruh!!!!\n");
         }
     }
-    
 
     free(stat);
-    return 0;
+    return;
 }
 
-int searchfromfile(FILE *dir, char *value, char *followingstring) {
+int searchfromfile(FILE *dir, char *value, char *followingstring)
+{
     char buffer[100];
 
-    while(!feof(dir)) {
+    while (!feof(dir))
+    {
         fscanf(dir, "%s", buffer);
-        if(strcmp(buffer, value) == 0){
-            //int valueindex = ftell(dir);
+        if (strcmp(buffer, value) == 0)
+        {
+            // int valueindex = ftell(dir);
             fscanf(dir, "%s", followingstring);
             return 0;
-        }       
+        }
     }
 
     followingstring[0] = '\0';
     return 1;
 }
 
-void initload(gamestatus *stat) {
-    printf("====================================\n\tK.Knock Pokemon Game\n\n\tpress enter to start\n====================================\n");
-    getc(stdin);
-    printf("\033[H\033[J\n===============================\n1. 새로하기\t2. 이어하기\n>>");
-    
-    int condition = 0;
-    while (condition == 0) {
-        int choice;
-        scanf(" %d", &choice);
-        switch (choice) {
-            case 1:
-                printf("\033[H\033[J\n새 게임을 시작합니다...\n");
-                characreator(stat);
-                condition = 1;
-                break;
-            case 2:
-                printf("\033[H\033[J\n세이브를 불러옵니다...\n");
-                saveloader(stat);
-                condition = 1;
-                break;
+void initload(gamestatus *stat)
+{
+    char buffer[1024];
 
-            default:
-                printf("\033[H\033[J\n1과 2 중 선택하십시오.\n\n===============================\n1. 새로하기\t2. 이어하기\n>>");
+    printf("====================================\n\tK.Knock Pokemon Game\n\n\tpress enter to start\n====================================\n");
+    fgetc(stdin);
+    printf("\033[H\033[J\n===============================\n1. 새로하기\t2. 이어하기\n>> ");
+
+    int condition = 0;
+    while (condition == 0)
+    {
+        int choice;
+        if (!fgets(buffer, 1024, stdin))
+        {
+            choice = 0;
+            continue;
+        }
+
+        choice = atoi(buffer);
+        switch (choice)
+        {
+        case 1:
+            printf("\033[H\033[J\n새 게임을 시작합니다...\n");
+            characreator(stat);
+            condition = 1;
+            break;
+        case 2:
+            printf("\033[H\033[J\n세이브를 불러옵니다...\n");
+            saveloader(stat);
+            condition = 1;
+            break;
+
+        default:
+            printf("\033[H\033[J\n1과 2 중 선택하십시오.\n\n===============================\n1. 새로하기\t2. 이어하기\n>> ");
+            // printf("test %d test\n", choice);
+            break;
         }
     }
     printf("\033[H\033[J\n");
@@ -135,8 +175,9 @@ void initload(gamestatus *stat) {
     return;
 }
 
-void characreator(gamestatus *stat) {
-    stat->savedir = fopen(savedef, "w");
+void characreator(gamestatus *stat)
+{
+    // stat->savedir = fopen(savedef, "w"); //세이브 기능으로 옮기기 uncomment
     stat->configdir = fopen(configdef, "r");
     stat->charastat = malloc(sizeof(pokedef));
     char starterpokes[3][20];
@@ -145,61 +186,87 @@ void characreator(gamestatus *stat) {
     srand(time(NULL));
 
     pokedef *playerchara = &stat->charastat[0];
-    stat->pokecount = 1;
-    fprintf(stat->savedir, "pokecount= %d\n", stat->pokecount);
-    
-    fscanf(stat->configdir, "%*d %s %*d %*d %*d %s %*d %*d %*d %s", starterpokes[0], starterpokes[1], starterpokes[2]);
+    stat->pokecount = 1; // 포켓몬 수
+    //fprintf(stat->savedir, "pokecount= %d\n", stat->pokecount);
+
+    stat->money = 10000; // 돈
+    //fprintf(stat->savedir, "money= %d\n", stat->money);
+
+    stat->healthpotion = 0; // 약
+    //fprintf(stat->savedir, "healthpotion= %d\n", stat->healthpotion);
+
+    fscanf(stat->configdir, "%*d %s %*d %*d %*d %s %*d %*d %*d %s", starterpokes[0], starterpokes[1], starterpokes[2]); // 시작 포켓몬 configdir 최초 3개 중 선택
     printf("===============================\n어느 포켓몬을 선택하시겠습니까?\n");
     printf("1. %s 2. %s 3. %s\n>>", starterpokes[0], starterpokes[1], starterpokes[2]);
 
-    int selection;
-    scanf("%d", &selection);
+    if (!fgets(buffer, 100, stdin))
+        return;
+    int selection = 0;
+    //scanf(" %d", &selection);
+    //getchar();
+    while(!selection) {
+        if(!fgets(buffer, 100, stdin)) {
+            printf("wrong\n");
+            continue;
+        }
+        selection = atoi(buffer);
+    }
 
-    rewind(stat->configdir);
-    for(int i=0; i<selection; i) {
-        if(fgetc(stat->configdir) == '\n') {
+    rewind(stat->configdir); // 리와인드해서 선택한 포켓몬 자리까지 이동
+    for (int i = 0; i < selection; i)
+    {
+        if (fgetc(stat->configdir) == '\n')
+        {
             i++;
         }
-    } 
+    }
 
-    fscanf(stat->configdir, "%s %d %d %d", buffer, &playerchara->type, &playerchara->atk, &playerchara->hp);
+    fscanf(stat->configdir, "%s %d %d %d", buffer, &playerchara->type, &playerchara->atk, &playerchara->hp); // 선택한 포켓몬 정보 읽어서 메모리 playerchara에 저장
     playerchara->name = malloc(sizeof(char) * (strlen(buffer) + 1));
-    playerchara->nickname = malloc(sizeof(char) *4);
+    playerchara->nickname = malloc(sizeof(char) * 4);
     playerchara->name = strdup(buffer);
     playerchara->nickname = strdup("none");
 
-    setcharastatus(playerchara);
+    setcharastatus(playerchara); // playerchara 상태 설정
 
-    fprintf(stat->savedir, "charactername= %s\nnickname= none\ncharactertype= %d\nattack= %d\nmaxhp= %d\ncurrenthp= %d\n", playerchara->name, playerchara->type, playerchara->atk, playerchara->hp, playerchara->curhp);
+    // fprintf(stat->savedir, "charactername= %s\nnickname= none\ncharactertype= %d\nattack= %d\nmaxhp= %d\ncurrenthp= %d\n", playerchara->name, playerchara->type, playerchara->atk, playerchara->hp, playerchara->curhp);
+    // 세이브 기능으로 옮기기 uncomment
     stat->currentpokemon = 0;
 
-    fclose(stat->savedir);
+    //fclose(stat->savedir);
     fclose(stat->configdir);
     return;
 }
 
-void setcharastatus(pokedef *chara) {
+void setcharastatus(pokedef *chara)
+{
     chara->atk = rand() % 100 + chara->atk + 1;
     chara->hp = rand() % 150 + chara->hp + 1;
     chara->curhp = chara->hp;
     return;
 }
 
-void saveloader(gamestatus *stat) {
+void saveloader(gamestatus *stat)
+{
     stat->savedir = fopen(savedef, "r");
     char buffer[100];
-    
+
     searchfromfile(stat->savedir, "pokecount=", buffer);
     stat->pokecount = atoi(buffer);
-
-    if(stat->savedir == NULL) {
+    searchfromfile(stat->savedir, "money=", buffer);
+    stat->money = atoi(buffer);
+    searchfromfile(stat->savedir, "healthpotion=", buffer);
+    stat->healthpotion = atoi(buffer);
+    if (stat->savedir == NULL)
+    {
         printf("저장된 파일이 없습니다.\n새 게임을 시작합니다...\n");
         characreator(stat);
         return;
     }
 
-    stat->charastat = malloc(sizeof(pokedef)*stat->pokecount);
-    for(int i=0; i<stat->pokecount; i++) {
+    stat->charastat = malloc(sizeof(pokedef) * stat->pokecount);
+    for (int i = 0; i < stat->pokecount; i++)
+    {
         pokedef *playerchara = &stat->charastat[i];
         searchfromfile(stat->savedir, "charactername=", buffer);
         playerchara->name = strdup(buffer);
@@ -226,70 +293,97 @@ void saveloader(gamestatus *stat) {
     return;
 }
 
-int mainmenu(gamestatus *stat) {
+int mainmenu(gamestatus *stat)
+{
     printf("===============================\n모험을 진행하시겠습니까?\n1. 네\t2. 저장 3. 상점 4. 포켓몬 센터 5. 포켓몬 도감\n>>");
     int choice;
-    scanf("%d", &choice);
+    scanf(" %d", &choice);
+    getchar();
     return choice;
 }
 
-void adventure(gamestatus *stat) {
+void adventure(gamestatus *stat)
+{
     pokedef *playerchara = &stat->charastat[stat->currentpokemon];
     pokedef *enemychara = malloc(sizeof(pokedef));
     stat->configdir = fopen(configdef, "r");
-    int buffer, validvalue=0;
+    int buffer, validvalue = 0;
     char bufferstr[100];
 
     srand(time(NULL));
 
     fscanf(stat->configdir, "%d", &buffer);
-    buffer = rand() % buffer +1;
+    buffer = rand() % buffer + 1;
 
-    for (int i=0; i<buffer; i){
-        if(fgetc(stat->configdir) == '\n') {
+    for (int i = 0; i < buffer; i)
+    {
+        if (fgetc(stat->configdir) == '\n')
+        {
             i++;
         }
     }
 
     fscanf(stat->configdir, "%s %d %d %d", bufferstr, &enemychara->type, &enemychara->atk, &enemychara->hp);
+    fclose(stat->configdir);
     enemychara->name = malloc(sizeof(char) * (strlen(bufferstr) + 1));
     enemychara->name = strdup(bufferstr);
     setcharastatus(enemychara);
 
     printf("\033[H\033[J\n===============================\n포켓몬을 탐색하는 중...\n");
-    //sleep(rand() % 5 + 1); uncomment
+    // sleep(rand() % 5 + 1); uncomment
     printf("\033[H\033[J\n===============================\n야생의 %s가 나타났다!\n===============================\n", enemychara->name);
 
-
-    while(validvalue == 0) {
+    while (validvalue == 0)
+    {
         printf("\t\t\t%s\n\t\t\t%d/%d\n%s\n%d/%d\n===============================\n무엇을 해야할까?\n1. 공격 2. 가방열기 3. 도망가기\n>>", enemychara->name, enemychara->curhp, enemychara->hp, playerchara->name, playerchara->curhp, playerchara->hp);
-        scanf("%d", &buffer);
+        scanf(" %d", &buffer);
+        getchar();
         printf("\033[H\033[J\n");
-        switch(buffer) {
-            case 1:
-                validvalue = combatinit(playerchara, enemychara);
-                if(validvalue == 1) {
-                    printf("exp stuff\n");
-                    return;
-                }
-                else if(validvalue == 2) {
-                    printf("replacerrr\n");
-                    validvalue = replaceplayerchara(stat);
-                    playerchara = &stat->charastat[stat->currentpokemon];
-                }
-                    
-                break;
-            case 2:
-            case 3:
+        switch (buffer)
+        {
+        case 1:
+            validvalue = combatinit(playerchara, enemychara);
+            if (validvalue == 1)
+            {
+                printf("exp stuff\n");
+                return;
+            }
+            else if (validvalue == 2)
+            {
+                validvalue = replaceplayerchara(stat);
+                playerchara = &stat->charastat[stat->currentpokemon];
+            }
 
-            default:
-                printf("\n1, 2, 3 중 선택하십시오.\n===============================\n");
+            break;
+        case 2:
+        case 3:
+            int retreatchance;
+            if (enemychara->curhp == 100)
+                retreatchance = 1;
+            else if (enemychara->curhp >= 60)
+                retreatchance = 4;
+            else if (enemychara->curhp >= 40)
+                retreatchance = 6;
+            else
+                retreatchance = 9;
+            if (rand() % 10 == rand() % retreatchance)
+            {
+                printf("성공적으로 도망쳤다!\n");
+                validvalue = 1;
+            }
+            else
+            {
+                printf("===============================\n도망칠 수 없었다...\n");
+                validvalue = combatinit(playerchara, enemychara);
+            }
+            break;
+
+            // default:
+            //    printf("\n1, 2, 3 중 선택하십시오.\n===============================\n");
         }
-        
     }
 
-
-    /*   
+    /*
     while(validvalue == 0) {
         printf("\t\t\t%s\n\t\t\t%d/%d\n%s\n%d/%d\n===============================\n무엇을 해야할까?\n1. 공격 2. 가방열기 3. 도망가기\n>>", enemychara->name, enemychara->curhp, enemychara->hp, playerchara->name, playerchara->curhp, playerchara->hp);
         scanf("%d", &buffer);
@@ -324,63 +418,75 @@ void adventure(gamestatus *stat) {
         }
     }*/
 
-    fclose(stat->configdir);
     free(enemychara);
     return;
 }
 
-int combatinit(pokedef *chara1, pokedef *chara2) {
+int combatinit(pokedef *chara1, pokedef *chara2)
+{
     srand(time(NULL));
-    if(rand()%2 == 0) {
+    if (rand() % 2 == 0)
+    {
         attack(chara1, chara2);
         attack(chara2, chara1);
         printf("===============================\n");
     }
-    else {
+    else
+    {
         attack(chara2, chara1);
         attack(chara1, chara2);
         printf("===============================\n");
     }
-    if(chara2->curhp <= 0) {
+    if (chara2->curhp <= 0)
+    {
         chara2->curhp = 0;
         printf("win\n");
         return 1;
     }
-    else if(chara1->curhp <= 0) {
+    else if (chara1->curhp <= 0)
+    {
         chara1->curhp = 0;
-        printf("===============================\n\t\t\t%s\n\t\t\t%d/%d\n%s (기절)\n%d/%d\n===============================\n어느 포켓몬을 내보낼까?\n", chara2->name, chara2->curhp, chara2->hp, chara1->name, chara1->curhp, chara1->hp);
+        printf("===============================\n\t\t\t%s\n\t\t\t%d/%d\n%s (기절)\n%d/%d\n===============================\n", chara2->name, chara2->curhp, chara2->hp, chara1->name, chara1->curhp, chara1->hp);
+        // printf("===============================\n\t\t\t%s\n\t\t\t%d/%d\n%s (기절)\n%d/%d\n===============================\n어느 포켓몬을 내보낼까?\n", chara2->name, chara2->curhp, chara2->hp, chara1->name, chara1->curhp, chara1->hp);
         return 2;
     }
-        
+
     return 0;
 }
 
-int attack(pokedef *chara1, pokedef *chara2) {
+int attack(pokedef *chara1, pokedef *chara2)
+{
     int attack1 = chara1->atk;
     srand(time(NULL));
 
-    if ((chara1->type == 1 && chara2->type == 2) || (chara1->type == 2 && chara2->type == 3) || (chara1->type == 3 && chara2->type == 1)) {
+    if ((chara1->type == 1 && chara2->type == 2) || (chara1->type == 2 && chara2->type == 3) || (chara1->type == 3 && chara2->type == 1))
+    {
         printf("===============================\n%s의 공격!\n", chara1->name);
-        if(rand()%5 == 0) {
+        if (rand() % 5 == 0)
+        {
             attack1 *= 1.5;
             printf("급소에 맞았다!\n");
         }
         printf("%s는 %d의 데미지를 입었다.\n효과가 굉장했다!\n", chara2->name, (int)(attack1 * 1.5));
         chara2->curhp -= attack1 * 1.5;
     }
-    else if ((chara1->type == 1 && chara2->type == 3) || (chara1->type == 2 && chara2->type == 1) || (chara1->type == 3 && chara2->type == 2)) {
+    else if ((chara1->type == 1 && chara2->type == 3) || (chara1->type == 2 && chara2->type == 1) || (chara1->type == 3 && chara2->type == 2))
+    {
         printf("===============================\n%s의 공격!\n", chara1->name);
-        if(rand()%5 == 4) {
+        if (rand() % 5 == 4)
+        {
             attack1 *= 1.5;
             printf("급소에 맞았다!\n");
         }
         printf("%s는 %d의 데미지를 입었다.\n효과가 별로인 듯 하다.\n", chara2->name, attack1 / 2);
         chara2->curhp -= attack1 / 2;
     }
-    else {
-        
+    else
+    {
+
         printf("===============================\n%s의 공격!\n", chara1->name);
-        if(rand()%5 == 1) {
+        if (rand() % 5 == 1)
+        {
             attack1 *= 1.5;
             printf("급소에 맞았다!\n");
         }
@@ -528,17 +634,21 @@ void attack(pokedef *chara1, pokedef *chara2) {
         chara2->curhp -= chara1->atk;
     }
 
-    
+
     return;
 }
 */
-int replaceplayerchara(gamestatus *stat) {
+int replaceplayerchara(gamestatus *stat)
+{
     int totaldefeat = 1;
     int remainingindex[100];
     int choice;
     int indexnum = 1;
-    for (int i=0; i<stat->pokecount; i++) {
-        if(i == stat->currentpokemon || stat->charastat[i].curhp == 0) {
+    for (int i = 0; i < stat->pokecount; i++)
+    {
+        // if(i == stat->currentpokemon || stat->charastat[i].curhp == 0) {
+        if (stat->charastat[i].curhp == 0)
+        {
             continue;
         }
         printf("%d. %s %d/%d\n", indexnum, stat->charastat[i].name, stat->charastat[i].curhp, stat->charastat[i].hp);
@@ -554,14 +664,88 @@ int replaceplayerchara(gamestatus *stat) {
         printf("%d. %s\n", i, buffer);
         totaldefeat = 0; */
     }
-    if(totaldefeat == 1) {
+    if (totaldefeat == 1)
+    {
+        printf("눈앞이 깜깜해졌다...\n");
         return 1;
     }
+    printf("어느 포켓몬을 내보낼까?\n");
     printf(">>");
-    scanf("%d", &choice);
+    scanf(" %d", &choice);
     stat->currentpokemon = remainingindex[choice];
     printf("\033[H\033[J\n");
 
-    fclose(stat->savedir);
     return 0;
+}
+
+void market(gamestatus *stat)
+{
+    int choice, condition = 1;
+    printf("\033[H\033[J\n");
+    printf("===============================\n상점\t지갑 : %d원\n1. 포켓몬볼 1000원\n2. 상처약 500원\n===============================\n무엇을 구매할까? (나가기 0)\n>>", stat->money);
+    scanf(" %d", &choice);
+    getchar();
+
+    while (condition)
+    {
+        switch (choice)
+        {
+        case 0:
+            condition = 0;
+            break;
+        case 1:
+            printf("포켓몬볼을 몇개 구매할까? (취소 -1)\n>>");
+            scanf(" %d", &choice);
+            getchar();
+            if (choice == -1)
+                break;
+            if (stat->money >= 1000 * choice)
+            {
+                stat->money -= 1000 * choice;
+                stat->pokeball += choice;
+                printf("성공적으로 구매하였다! (잔액 %d원)\n", stat->money);
+            }
+            else
+                printf("돈이 부족하다!\n");
+            break;
+        case 2:
+            printf("상처약을 몇개 구매할까? (취소 -1)\n>>");
+            scanf(" %d", &choice);
+            getchar();
+            if (choice == -1)
+                break;
+            if (stat->money >= 500 * choice)
+            {
+                stat->money -= 500 * choice;
+                stat->healthpotion += choice;
+                printf("성공적으로 구매하였다! (잔액 %d원)\n", stat->money);
+                break;
+            }
+            else
+                printf("돈이 부족하다!\n");
+            break;
+        default:
+            printf("1, 2, 0 중 골라라\n");
+            choice = 0;
+            break;
+        }
+    }
+}
+
+void centre(gamestatus *stat)
+{
+    printf("\033[H\033[J\n");
+    printf("===============================\n포켓몬 회복중...\n");
+    // sleep(rand() % 5 + 1); uncomment
+    printf("회복이 완료되었습니다!\n");
+    for (int i = 0; i < stat->pokecount; i++)
+    {
+        stat->charastat[i].curhp = stat->charastat[i].hp;
+        printf("%s %s %d/%d\n", stat->charastat[i].name, poketypename[stat->charastat[i].type], stat->charastat[i].curhp, stat->charastat[i].hp);
+    }
+    printf("===============================\n메인화면으로 돌아가려면 엔터를 누르십시오\n===============================\n");
+    getc(stdin);
+    printf("\033[H\033[J\n");
+
+    return;
 }
