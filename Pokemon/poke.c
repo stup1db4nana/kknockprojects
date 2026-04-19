@@ -4,7 +4,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 #include <time.h>
 
 #define savedef "pokesave"   // 세이브 이름
@@ -64,7 +63,7 @@ void centre(gamestatus *stat);
 
 void pokedex(gamestatus *stat);
 
-void main()
+int main()
 {
     gamestatus *stat = malloc(sizeof(gamestatus));
     int repeatcondition = 1;
@@ -107,12 +106,13 @@ void main()
         default:
             system(clear);
             printf("1, 2, 3, 4, 5 중 하나만 입력하십시오.\n");
+                repeatcondition = 0;
             break;
         }
     }
 
     free(stat);
-    return;
+    return 0;
 }
 
 int searchfromfile(FILE *dir, char *value, char *followingstring)
@@ -184,8 +184,6 @@ void initload(gamestatus *stat)
             break;
         }
     }
-
-    return;
 }
 
 void characreator(gamestatus *stat)
@@ -245,7 +243,6 @@ void characreator(gamestatus *stat)
     stat->currentpokemon = 0;
 
     fclose(stat->configdir);
-    return;
 }
 
 void setcharastatus(pokedef *chara)
@@ -253,8 +250,6 @@ void setcharastatus(pokedef *chara)
     chara->atk = rand() % 100 + chara->atk + 1;
     chara->hp = rand() % 150 + chara->hp + 1;
     chara->curhp = chara->hp;
-
-    return;
 }
 
 void saveloader(gamestatus *stat)
@@ -303,7 +298,6 @@ void saveloader(gamestatus *stat)
     */
 
     fclose(stat->savedir);
-    return;
 }
 
 int mainmenu(gamestatus *stat)
@@ -704,5 +698,4 @@ void centre(gamestatus *stat)
     printf("===============================\n메인화면으로 돌아가려면 엔터를 누르십시오\n===============================\n");
     getc(stdin);
     system(clear);
-    return;
 }
